@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIT GPA Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #e8f4f8;
+    --surface: #1a1a2e;
+    --surface2: #121220;
+    --border: #2e2e50;
+    --accent: #ffcc00;
+    --accent2: #ff6a9e;
+    --accent3: #6affd4;
+    --text: #e8e8f0;
+    --text-muted: #8080b0;
+    --glow: rgba(255, 204, 0, 0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 10% 10%, rgba(255,100,50,0.25) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 90% 80%, rgba(100,180,255,0.2) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 60% at 50% 50%, rgba(255,220,80,0.12) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 40px 20px 80px;
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    margin-bottom: 48px;
+    animation: fadeDown 0.6s ease both;
+  }
+
+  .badge {
+    display: inline-block;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #1a1a2e;
+    border: 1.5px solid #1a1a2e;
+    padding: 5px 14px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+    background: rgba(255,255,255,0.5);
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(32px, 6vw, 56px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, #1a1a2e 20%, #e85d00 60%, #cc0055 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+  }
+
+  .subtitle {
+    color: #444466;
+    font-size: 13px;
+    letter-spacing: 1px;
+  }
+
+  /* Stats bar */
+  .stats-bar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 28px;
+    animation: fadeUp 0.6s ease 0.2s both;
+    flex-wrap: wrap;
+  }
+
+  .stat-pill {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    flex: 1;
+    min-width: 120px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  }
+
+  .stat-pill .label {
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 10px;
+  }
+
+  .stat-pill .value {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent);
+    transition: all 0.3s ease;
+  }
+
+  /* Card */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    animation: fadeUp 0.6s ease 0.3s both;
+    box-shadow: 0 8px 48px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.04);
+  }
+
+  .card-header {
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-header-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .dot-row {
+    display: flex;
+    gap: 6px;
+  }
+
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+
+  .dot:nth-child(1) { background: #ff5f56; }
+  .dot:nth-child(2) { background: #ffbd2e; }
+  .dot:nth-child(3) { background: #27c93f; }
+
+  /* Table */
+  .table-wrap {
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead th {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 14px 20px;
+    text-align: left;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.2s;
+    animation: rowIn 0.35s ease both;
+  }
+
+  tbody tr:hover {
+    background: rgba(124,106,255,0.04);
+  }
+
+  tbody tr:last-child { border-bottom: none; }
+
+  td {
+    padding: 14px 20px;
+    font-size: 13px;
+    vertical-align: middle;
+  }
+
+  .subject-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .subject-index {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  select, input[type="number"], input[type="text"] {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: #ffffff;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    padding: 8px 12px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 90px;
+  }
+
+  input[type="text"].subject-input {
+    width: 150px;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    background: rgba(255,255,255,0.07);
+    border-color: rgba(255,255,255,0.1);
+  }
+
+  input[type="text"].subject-input:focus {
+    border-color: var(--accent);
+    background: rgba(255,255,255,0.1);
+  }
+
+  select:focus, input[type="number"]:focus, input[type="text"]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(255,204,0,0.2);
+  }
+
+  select option {
+    background: #121220;
+    color: #ffffff;
+  }
+
+  .grade-badge {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    line-height: 32px;
+    text-align: center;
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    margin-left: 8px;
+    transition: all 0.2s;
+  }
+
+  .delete-btn {
+    background: none;
+    border: 1px solid transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 5px 9px;
+    font-size: 16px;
+    transition: all 0.2s;
+    line-height: 1;
+  }
+
+  .delete-btn:hover {
+    border-color: #ff5f56;
+    color: #ff5f56;
+    background: rgba(255,95,86,0.08);
+  }
+
+  /* Grade select coloring */
+  select.grade-S { color: #ffd700; }
+  select.grade-A { color: var(--accent3); }
+  select.grade-B { color: var(--accent); }
+  select.grade-C { color: #7fb3ff; }
+  select.grade-D { color: var(--accent2); }
+  select.grade-E { color: #ffaa6a; }
+  select.grade-F { color: #ff5f56; }
+
+  /* Empty state */
+  .empty-state {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--text-muted);
+  }
+
+  .empty-state .icon {
+    font-size: 40px;
+    margin-bottom: 12px;
+    opacity: 0.4;
+  }
+
+  .empty-state p {
+    font-size: 13px;
+    letter-spacing: 0.5px;
+  }
+
+  /* Actions */
+  .actions {
+    display: flex;
+    gap: 12px;
+    padding: 20px 24px;
+    background: var(--surface2);
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    padding: 10px 22px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #1a1a2e;
+    flex: 1;
+  }
+
+  .btn-primary:hover {
+    background: #e6b800;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 24px rgba(255,204,0,0.4);
+  }
+
+  .btn-secondary {
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: translateY(-1px);
+  }
+
+  .btn-danger {
+    background: none;
+    color: #ff5f56;
+    border: 1px solid rgba(255,95,86,0.3);
+  }
+
+  .btn-danger:hover {
+    background: rgba(255,95,86,0.08);
+    transform: translateY(-1px);
+  }
+
+  /* Result panel */
+  .result-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    margin-top: 20px;
+    overflow: hidden;
+    animation: fadeUp 0.5s ease both;
+    display: none;
+    box-shadow: 0 8px 48px rgba(0,0,0,0.25);
+  }
+
+  .result-panel.visible {
+    display: block;
+  }
+
+  .result-inner {
+    padding: 32px;
+    text-align: center;
+  }
+
+  .result-label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+
+  .result-gpa {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(52px, 12vw, 80px);
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 10px;
+    transition: color 0.5s;
+  }
+
+  .result-grade-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+
+  .result-subtitle {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .result-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 0 32px;
+  }
+
+  .result-details {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    padding: 20px 32px;
+    flex-wrap: wrap;
+  }
+
+  .detail-item {
+    text-align: center;
+  }
+
+  .detail-item .d-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+
+  .detail-item .d-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  /* Grade bar */
+  .grade-bar-wrap {
+    padding: 0 32px 28px;
+  }
+
+  .grade-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+  }
+
+  .grade-bar-track {
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 99px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .grade-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.8s cubic-bezier(0.34,1.56,0.64,1), background 0.5s;
+    width: 0%;
+  }
+
+  /* Grade color scale */
+  .gpa-s { color: #ffd700; }
+  .gpa-a { color: var(--accent3); }
+  .gpa-b { color: var(--accent); }
+  .gpa-c { color: #7fb3ff; }
+  .gpa-d { color: var(--accent2); }
+  .gpa-f { color: #ff5f56; }
+
+  .bar-s { background: #ffd700; }
+  .bar-a { background: var(--accent3); }
+  .bar-b { background: var(--accent); }
+  .bar-c { background: #7fb3ff; }
+  .bar-d { background: var(--accent2); }
+  .bar-f { background: #ff5f56; }
+
+  /* Grade legend */
+  .grade-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 20px 24px;
+    border-top: 1px solid var(--border);
+    animation: fadeUp 0.6s ease 0.5s both;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text-muted);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 10px;
+  }
+
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  /* Animations */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes rowIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  @keyframes popIn {
+    0%   { transform: scale(0.8); opacity: 0; }
+    60%  { transform: scale(1.08); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .pop { animation: popIn 0.45s cubic-bezier(0.34,1.56,0.64,1) both; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 24px;
+    font-size: 13px;
+    z-index: 100;
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    white-space: nowrap;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.error { border-color: #ff5f56; color: #ff5f56; }
+
+  @media (max-width: 600px) {
+    td { padding: 10px 14px; }
+    thead th { padding: 10px 14px; }
+    .actions { padding: 16px 14px; }
+    select, input[type="number"] { width: 75px; }
+    .result-details { gap: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="badge">VIT University</div>
+    <h1>GPA Calculator</h1>
+    <p class="subtitle">Track your grades · Calculate CGPA</p>
+  </header>
+
+  <div class="stats-bar">
+    <div class="stat-pill">
+      <div>
+        <div class="label">Subjects</div>
+        <div class="value" id="statSubjects">0</div>
+      </div>
+    </div>
+    <div class="stat-pill">
+      <div>
+        <div class="label">Total Credits</div>
+        <div class="value" id="statCredits">0</div>
+      </div>
+    </div>
+    <div class="stat-pill">
+      <div>
+        <div class="label">Grade Points</div>
+        <div class="value" id="statPoints">0</div>
+      </div>
+    </div>
+    <div class="stat-pill">
+      <div>
+        <div class="label">Live GPA</div>
+        <div class="value" id="statGPA">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-header-title">Subjects</span>
+      <div class="dot-row"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    </div>
+
+    <div class="table-wrap">
+      <table id="gpaTable">
+        <thead>
+          <tr>
+            <th>Subject</th>
+            <th>Grade</th>
+            <th>Credits</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="gpaBody">
+          <tr id="emptyRow">
+            <td colspan="4">
+              <div class="empty-state">
+                <div class="icon">📚</div>
+                <p>No subjects yet. Add one to get started.</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-secondary" onclick="addRow()">
+        <span>＋</span> Add Subject
+      </button>
+      <button class="btn btn-primary" onclick="calculateGPA()">
+        <span>⚡</span> Calculate GPA
+      </button>
+      <button class="btn btn-danger" onclick="clearAll()">
+        ✕ Clear
+      </button>
+    </div>
+
+    <div class="grade-legend">
+      <div class="legend-item"><span class="legend-dot" style="background:#ffd700"></span>S — 10</div>
+      <div class="legend-item"><span class="legend-dot" style="background:var(--accent3)"></span>A — 9</div>
+      <div class="legend-item"><span class="legend-dot" style="background:var(--accent)"></span>B — 8</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#7fb3ff"></span>C — 7</div>
+      <div class="legend-item"><span class="legend-dot" style="background:var(--accent2)"></span>D — 6</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#ffaa6a"></span>E — 5</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#ff5f56"></span>F — 0</div>
+    </div>
+  </div>
+
+  <div class="result-panel" id="resultPanel">
+    <div class="result-inner">
+      <div class="result-label">Your Semester GPA</div>
+      <div class="result-gpa pop" id="resultGPA">0.00</div>
+      <div class="result-grade-label" id="resultGradeLabel"></div>
+      <div class="result-subtitle" id="resultSubtitle"></div>
+    </div>
+    <div class="result-divider"></div>
+    <div class="result-details">
+      <div class="detail-item">
+        <div class="d-label">Subjects</div>
+        <div class="d-value" id="rSubjects">0</div>
+      </div>
+      <div class="detail-item">
+        <div class="d-label">Total Credits</div>
+        <div class="d-value" id="rCredits">0</div>
+      </div>
+      <div class="detail-item">
+        <div class="d-label">Grade Points</div>
+        <div class="d-value" id="rPoints">0</div>
+      </div>
+    </div>
+    <div class="grade-bar-wrap">
+      <div class="grade-bar-label">
+        <span>0.0</span>
+        <span>Scale: 0 – 10</span>
+        <span>10.0</span>
+      </div>
+      <div class="grade-bar-track">
+        <div class="grade-bar-fill" id="gradeBarFill"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const gradePoints = { S:10, A:9, B:8, C:7, D:6, E:5, F:0 };
+const gradeColors = {
+  S: { cls:'gpa-s', bar:'bar-s', label:'Outstanding', subtitle:'You\'re at the top of the class!' },
+  A: { cls:'gpa-a', bar:'bar-a', label:'Excellent',    subtitle:'Brilliant performance!' },
+  B: { cls:'gpa-b', bar:'bar-b', label:'Very Good',    subtitle:'Great work, keep it up!' },
+  C: { cls:'gpa-c', bar:'bar-c', label:'Good',         subtitle:'Solid performance overall.' },
+  D: { cls:'gpa-d', bar:'bar-d', label:'Average',      subtitle:'There\'s room to grow.' },
+  E: { cls:'gpa-e', bar:'bar-e', label:'Pass',         subtitle:'Just over the line — push harder.' },
+  F: { cls:'gpa-f', bar:'bar-f', label:'Fail',         subtitle:'Consider speaking with an advisor.' }
+};
+
+let count = 0;
+
+function gradeLetterFromGPA(gpa) {
+  if (gpa >= 9.5) return 'S';
+  if (gpa >= 8.5) return 'A';
+  if (gpa >= 7.5) return 'B';
+  if (gpa >= 6.5) return 'C';
+  if (gpa >= 5.5) return 'D';
+  if (gpa >= 4.5) return 'E';
+  return 'F';
+}
+
+function updateGradeSelectStyle(sel) {
+  const g = sel.value;
+  sel.className = `grade-${g}`;
+}
+
+function addRow() {
+  count++;
+  const empty = document.getElementById('emptyRow');
+  if (empty) empty.remove();
+
+  const tbody = document.getElementById('gpaBody');
+  const row = document.createElement('tr');
+  row.id = `row-${count}`;
+  row.innerHTML = `
+    <td>
+      <input type="text" class="subject-input" value="Subject ${count}" placeholder="Subject name" oninput="liveUpdate()">
+      <div class="subject-index">#${String(count).padStart(2,'0')}</div>
+    </td>
+    <td>
+      <select onchange="updateGradeSelectStyle(this); liveUpdate()">
+        ${Object.keys(gradePoints).map(g=>`<option value="${g}">${g}</option>`).join('')}
+      </select>
+    </td>
+    <td>
+      <input type="number" min="0" step="0.5" placeholder="e.g. 3" oninput="liveUpdate()">
+    </td>
+    <td>
+      <button class="delete-btn" onclick="deleteRow(${count})" title="Remove">✕</button>
+    </td>
+  `;
+  tbody.appendChild(row);
+
+  const sel = row.querySelector('select');
+  updateGradeSelectStyle(sel);
+
+  updateStats();
+}
+
+function deleteRow(id) {
+  const row = document.getElementById(`row-${id}`);
+  if (row) row.remove();
+  if (document.getElementById('gpaBody').children.length === 0) {
+    const tr = document.createElement('tr');
+    tr.id = 'emptyRow';
+    tr.innerHTML = `<td colspan="4"><div class="empty-state"><div class="icon">📚</div><p>No subjects yet. Add one to get started.</p></div></td>`;
+    document.getElementById('gpaBody').appendChild(tr);
+  }
+  liveUpdate();
+}
+
+function clearAll() {
+  document.getElementById('gpaBody').innerHTML = `
+    <tr id="emptyRow"><td colspan="4"><div class="empty-state"><div class="icon">📚</div><p>No subjects yet. Add one to get started.</p></div></td></tr>
+  `;
+  count = 0;
+  document.getElementById('resultPanel').classList.remove('visible');
+  updateStats(0, 0);
+  showToast('Cleared all subjects.');
+}
+
+function getRows() {
+  return [...document.querySelectorAll('#gpaBody tr')].filter(r => r.id !== 'emptyRow');
+}
+
+function liveUpdate() {
+  const rows = getRows();
+  let tc = 0, tp = 0, valid = true;
+  for (const row of rows) {
+    const grade = row.querySelector('select')?.value;
+    const credits = parseFloat(row.querySelector('input[type="number"]')?.value);
+    if (isNaN(credits)) { valid = false; continue; }
+    tc += credits;
+    tp += gradePoints[grade] * credits;
+  }
+  updateStats(tc, tp, valid && rows.length > 0);
+}
+
+function updateStats(tc, tp, showGPA = false) {
+  const rows = getRows();
+  document.getElementById('statSubjects').textContent = rows.length;
+
+  if (tc !== undefined) {
+    document.getElementById('statCredits').textContent = tc || 0;
+    document.getElementById('statPoints').textContent  = tp || 0;
+    document.getElementById('statGPA').textContent = (showGPA && tc) ? (tp/tc).toFixed(2) : '—';
+  }
+}
+
+function calculateGPA() {
+  const rows = getRows();
+  if (rows.length === 0) { showToast('Add at least one subject first!', true); return; }
+
+  let tc = 0, tp = 0;
+  for (const row of rows) {
+    const grade   = row.querySelector('select')?.value;
+    const credits = parseFloat(row.querySelector('input[type="number"]')?.value);
+    if (isNaN(credits) || credits < 0) { showToast('Please enter valid credits (0 or more) for all subjects!', true); return; }
+    tc += credits;
+    tp += gradePoints[grade] * credits;
+  }
+
+  if (tc === 0) { showToast('Total credits are 0 — GPA cannot be calculated.', true); return; }
+
+  const gpa = tp / tc;
+  const letter = gradeLetterFromGPA(gpa);
+  const info = gradeColors[letter];
+
+  const panel = document.getElementById('resultPanel');
+  const gpaEl = document.getElementById('resultGPA');
+
+  gpaEl.textContent = gpa.toFixed(2);
+  gpaEl.className = `result-gpa pop ${info.cls}`;
+
+  document.getElementById('resultGradeLabel').textContent = info.label;
+  document.getElementById('resultSubtitle').textContent   = info.subtitle;
+  document.getElementById('rSubjects').textContent = rows.length;
+  document.getElementById('rCredits').textContent  = tc;
+  document.getElementById('rPoints').textContent   = tp.toFixed(1);
+
+  const fill = document.getElementById('gradeBarFill');
+  fill.className = `grade-bar-fill ${info.bar}`;
+  setTimeout(() => { fill.style.width = (gpa / 10 * 100) + '%'; }, 50);
+
+  panel.classList.add('visible');
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  document.getElementById('statGPA').textContent = gpa.toFixed(2);
+  document.getElementById('statCredits').textContent = tc;
+  document.getElementById('statPoints').textContent  = tp.toFixed(1);
+}
+
+function showToast(msg, isError = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (isError ? ' error' : '') + ' show';
+  setTimeout(() => { t.classList.remove('show'); }, 2800);
+}
+
+// Pre-load with 3 sample subjects
+for (let i = 0; i < 3; i++) addRow();
+</script>
+</body>
+</html>
